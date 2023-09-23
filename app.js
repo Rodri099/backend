@@ -2,7 +2,9 @@ const express = require('express');
 const ProductManager = require('./ProductManager'); // Asegúrate de ajustar la ruta al archivo ProductManager
 
 const app = express();
-const port = process.env.PORT || 3000;
+const productsRouter = require('./productsRouter');
+const cartsRouter = require('./cartsRouter');
+const port = process.env.PORT || 8080;
 
 const productManager = new ProductManager('productos.json');
 
@@ -43,6 +45,13 @@ app.get('/products/:pid', async (req, res) => {
   }
 });
 
+// Rutas para productos
+app.use('/api/products', productsRouter);
+
+// Rutas para carritos
+app.use('/api/carts', cartsRouter);
+
 app.listen(port, () => {
   console.log(`Servidor en ejecución en el puerto ${port}`);
 });
+
