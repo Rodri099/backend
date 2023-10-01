@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Agregar Producto en Tiempo Real</title>
+</head>
+<body>
+    <h1>Agregar Producto en Tiempo Real</h1>
+    <form id="productForm">
+        <label for="title">Título:</label>
+        <input type="text" id="title" name="title"><br><br>
+
+        <label for="description">Descripción:</label>
+        <input type="text" id="description" name="description"><br><br>
+
+        <label for="price">Precio:</label>
+        <input type="number" id="price" name="price"><br><br>
+
+        <button type="submit">Agregar Producto</button>
+    </form>
+
+    <!-- Aquí puedes mostrar la lista de productos en tiempo real -->
+    <ul id="productList">
+        <!-- Los productos se agregarán aquí -->
+    </ul>
+
+    <!-- Agrega el script para manejar WebSocket -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Cliente WebSocket
+        const socket = io();
+
+        // Manejar el envío del formulario cuando se agrega un producto
+        const productForm = document.getElementById('productForm');
+        const productList = document.getElementById('productList');
+
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const price = document.getElementById('price').value;
+
+            // Enviar los datos del producto al servidor a través de WebSocket
+            socket.emit('addProduct', { title, description, price });
+
+            // Limpiar el formulario o realizar otras acciones según tus necesidades
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('price').value = '';
+        });
+
+        // Escuchar la actualización de productos desde el servidor
+        socket.on('updateProducts', (products) => {
+            // Limpiar la lista de productos
+            productList.innerHTML = '';
+
+            // Mostrar la lista actualizada de productos
+            products.forEach((product) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${product.title} - ${product.price}`;
+                productList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+</html>

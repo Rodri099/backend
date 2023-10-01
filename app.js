@@ -1,57 +1,62 @@
 const express = require('express');
-const ProductManager = require('./ProductManager'); // Asegúrate de ajustar la ruta al archivo ProductManager
-
-const app = express();
+const http = require('http');
+const socketIo = require('socket.io');
+const exphbs = require('express-handlebars');
+const ProductManager = require('./ProductManager'); // Ajusta la ruta al archivo ProductManager
 const productsRouter = require('./productsRouter');
 const cartsRouter = require('./cartsRouter');
-const port = process.env.PORT || 8080;
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 
 const productManager = new ProductManager('productos.json');
+
+// Configuración de Handlebars
+app.engine('.handlebars', exphbs({ extname: '.handlebars' }));
+app.set('view engine', '.handlebars');
 
 // Middleware para permitir el análisis de JSON en las solicitudes
 app.use(express.json());
 
-// Endpoint para obtener todos los productos
-app.get('/products', async (req, res) => {
-  try {
-    const { limit } = req.query;
+// Directorio de archivos estáticos
+app.use(express.static('public'));
 
-    const products = await productManager.getProducts();
+// Directorio de vistas Handlebars
+app.set('views', __dirname + '/views');
 
-    if (limit) {
-      const limitedProducts = products.slice(0, parseInt(limit));
-      res.json(limitedProducts);
-    } else {
-      res.json(products);
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los productos' });
-  }
-});
-
-// Endpoint para obtener un producto por ID
-app.get('/products/:pid', async (req, res) => {
-  try {
-    const productId = parseInt(req.params.pid);
-    const product = await productManager.getProductById(productId);
-
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ error: 'Producto no encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener el producto por ID' });
-  }
-});
-
-// Rutas para productos
+// Rutas para productos (usando HTTP)
 app.use('/api/products', productsRouter);
 
-// Rutas para carritos
+// Rutas para carritos (usando HTTP)
 app.use('/api/carts', cartsRouter);
 
-app.listen(port, () => {
+// Ruta para la vista principal
+app.get('/', (req, res) => {
+  // Obtener la lista de productos y renderizar la vista
+  const products = productManager.getProducts();
+  res.render('index', { products });
+});
+
+// WebSocket para actualizaciones en tiempo real
+io.on('connection', (socket) => {
+  console.log('Cliente conectado');
+  
+  // Escuchar eventos personalizados (ejemplo: cuando se agrega un producto)
+  socket.on('productAdded', () => {
+    // Enviar una señal a todos los clientes conectados para actualizar la lista de productos
+    io.emit('updateProducts');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado');
+  });
+});
+
+const port = process.env.PORT || 8080;
+
+server.listen(port, () => {
   console.log(`Servidor en ejecución en el puerto ${port}`);
 });
+
 
