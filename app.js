@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const exphbs = require('express-handlebars');
-const ProductManager = require('./ProductManager'); // Ajusta la ruta al archivo ProductManager
+const ProductManager = require('./ProductManager'); // Se Ajusta la ruta al archivo ProductManager
 const productsRouter = require('./productsRouter');
 const cartsRouter = require('./cartsRouter');
 
